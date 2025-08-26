@@ -1,22 +1,6 @@
-[tool.poetry]
-name = "pythonproject3"
 version = "0.1.0"
-description = ""
-authors = ["lee <a50639174@gmail.com>"]
 readme = "README.md"
 
-[tool.poetry.dependencies]
-python = "^3.9"
-python-dotenv = "^1.1.1"
-tortoise = "^0.1.1"
-fastapi = "^0.116.1"
-api = "^0.0.7"
-
 [tool.aerich]
-tortoise_orm = "fastapiminiproject.app.api.db.database.TORTOISE_ORM"
 location = "./migrations"
 src_folder = "./."
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
