@@ -4,3 +4,11 @@ readme = "README.md"
 [tool.aerich]
 location = "./migrations"
 src_folder = "./."
+
+[project]
+name = "fastapiminiproject"
+version = "0.1.0"
+dependencies = [
+    "uvicorn>=0.35.0",
+]
+
