@@ -1,22 +1,26 @@
-from tortoise import fields
-from tortoise.models import Model
+from tortoise import fields, models
 
-class User(Model):
+class User(models.Model):
     id = fields.IntField(pk=True)
-    email = fields.CharField(max_length=255, unique=True)
-    password = fields.CharField(max_length=100)
-    nickname = fields.CharField(max_length=100)
-    phone_number = fields.CharField(max_length=20, null=True)
+    email = fields.CharField(255, unique=True, index=True)
+    name = fields.CharField(50)
+    nickname = fields.CharField(100, null=True)
+    phone_number = fields.CharField(20, null=True)
 
-    last_login = fields.DatetimeField(null=True)
+    hashed_password = fields.CharField(255)  # ← 이름/길이 수정 권장
+
+    is_active = fields.BooleanField(default=True)
     is_staff = fields.BooleanField(default=False)
     is_superuser = fields.BooleanField(default=False)
-    is_active = fields.BooleanField(default=True)
-
+    is_verified = fields.BooleanField(default=False)
+    last_login = fields.DatetimeField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
     diaries: fields.ReverseRelation["Diary"]
 
     class Meta:
-        table = "user"
+        table = "users"
+
+    def __str__(self) -> str:
+        return f"<User {self.email}>"
