@@ -7,6 +7,7 @@ from .diary.urls import router as diary_router
 from .notify.urls import router as notify_router
 from .tag.urls import router as tag_router
 from .users.urls import router as users_router
+from app.api.v1.tag.endpoints import router as tag_router
 
 api_router = APIRouter()
 api_router.include_router(auth_router)

@@ -1,8 +1,8 @@
-# app/api/v1/tag/endpoints.py
-from __future__ import annotations  # (선택) list[...] 전방참조 안전장치
-from fastapi import APIRouter, Depends, status
+from __future__ import annotations
+from fastapi import APIRouter, Depends, status, HTTPException
 from pydantic import BaseModel, Field
 from app.api.core.security import get_current_user
+from app.api.repositories import tag_repo  # ✅ 추가
 
 router = APIRouter(prefix="/tags", tags=["tag"])
 
@@ -19,15 +19,16 @@ async def ping():
 
 @router.get("", response_model=list[TagOut])
 async def list_tags(user=Depends(get_current_user)):
-    # TODO: 나중에 DB repo 연동
-    return []
+    return [TagOut(id=t.id, name=t.name) for t in tag_repo.list_by_user(user.id)]
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=TagOut)
 async def create_tag(payload: TagCreate, user=Depends(get_current_user)):
-    # TODO: 나중에 DB repo 연동
-    return TagOut(id=1, name=payload.name)
+    t = tag_repo.create(user.id, payload.name)
+    return TagOut(id=t.id, name=t.name)
 
 @router.delete("/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_tag(tag_id: int, user=Depends(get_current_user)):
-    # TODO: 나중에 DB repo 연동
+    ok = tag_repo.delete(user.id, tag_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Tag not found")
     return
