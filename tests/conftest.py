@@ -1,7 +1,7 @@
 # tests/conftest.py
 import os, sys
-os.environ.setdefault("USE_FAKE_REPOS", "true")
-os.environ.setdefault("DB_URL", "sqlite://:memory:")
+os.environ["USE_FAKE_REPOS"] = "false"          # ← 항상 DB 레포 강제
+os.environ["DB_URL"] = "sqlite://:memory:"      # ← 테스트는 인메모리 SQLite
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import pytest
 import httpx
