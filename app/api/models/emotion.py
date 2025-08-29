@@ -1,14 +1,12 @@
+# app/api/models/emotion_keyword.py
 from tortoise import fields, models
 
 class EmotionKeyword(models.Model):
     id = fields.IntField(pk=True)
-    keyword = fields.CharField(max_length=50)
-    emotion_type = fields.CharField(max_length=50)
-
-    diaries: fields.ManyToManyRelation["Diary"] = fields.ManyToManyField(
-        "models.Diary", related_name="emotion_keywords", through="diary_emotion_keywords"
-    )
-
+    name = fields.CharField(max_length=50, unique=True)
 
     class Meta:
-        table = "emotion keyword"
+        table = "emotion_keyword"
+
+    def __str__(self) -> str:
+        return f"<EmotionKeyword {self.id} {self.name!r}>"
