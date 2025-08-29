@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Optional
+from tortoise.exceptions import IntegrityError
 
 from app.api.models.user import User         # (예: app/api/models/user.py 인 경우)
 
@@ -10,7 +11,11 @@ async def get_by_email(email: str) -> Optional[User]:
     return await User.get_or_none(email=email)
 
 async def create_user(email: str, name: str, hashed_password: str) -> User:
-    return await User.create(email=email, name=name, hashed_password=hashed_password)
+    try:
+        return await User.create(email=email, name=name, hashed_password=hashed_password)
+    except IntegrityError:
+        # 레포에선 도메인 예외로 변환
+        raise ValueError("email already exists")
 
 async def mark_verified(email: str) -> Optional[User]:
     user = await User.get_or_none(email=email)
