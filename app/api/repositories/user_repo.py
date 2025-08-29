@@ -1,15 +1,13 @@
 # app/api/repositories/user_repo.py
+from __future__ import annotations
+
 from app.api.core.config import settings
 
-if settings.USE_FAKE_REPOS:
+USE_FAKE = bool(getattr(settings, "USE_FAKE_REPOS", False))
+
+if USE_FAKE:
+    # 테스트/로컬: 인메모리 리포지토리 사용
     from .memory.user_repo import *  # noqa: F401,F403
 else:
-    from .db.user_repo import *  # noqa: F401,F403
-
-
-if getattr(settings, "USE_FAKE_REPOS", False):
-    # ✅ 테스트/메모리
-    from .memory.user_repo import *  # noqa: F401,F403
-else:
-    # ✅ 실DB 구현 (기존 내용을 옮겨둔 위치로 임포트)
+    # 런타임/실서버: DB 리포지토리 사용
     from .db.user_repo import *  # noqa: F401,F403

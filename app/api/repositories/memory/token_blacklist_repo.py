@@ -1,35 +1,30 @@
 # app/api/repositories/memory/token_blacklist_repo.py
 from __future__ import annotations
+
 from datetime import datetime, timezone
-from typing import Dict
+from typing import Dict, Optional
 
-_blacklist: Dict[str, datetime] = {}
+# jti -> expires_at
+_store: Dict[str, datetime] = {}
 
-async def add_to_blacklist(jti: str, expires_at: datetime) -> None:
-    _blacklist[jti] = expires_at
+async def blacklist_jti(jti: str, expires_at: datetime) -> None:
+    _store[jti] = expires_at
 
-# (호환용) 예전에 쓰던 이름이 있으면 이렇게 별칭으로 유지
-blacklist_jti = add_to_blacklist
-
-async def is_jti_blacklisted(jti: str) -> bool:
-    exp = _blacklist.get(jti)
+async def is_blacklisted(jti: str) -> bool:
+    exp = _store.get(jti)
     if exp is None:
         return False
-    # 만료된 항목은 즉시 청소
-    if exp <= datetime.now(timezone.utc):
-        _blacklist.pop(jti, None)
-        return False
-    return True
+    # 만료면 의미 없음
+    return exp > datetime.now(timezone.utc)
 
-async def purge_expired(now: datetime | None = None) -> int:
-    """만료된 블랙리스트 항목 삭제하고 삭제 개수 반환."""
-    if now is None:
-        now = datetime.now(timezone.utc)
-    # 순회 중 변경 방지: list()로 복사
-    expired = [j for j, exp in list(_blacklist.items()) if exp <= now]
-    for j in expired:
-        _blacklist.pop(j, None)
-    return len(expired)
+async def purge_expired(now: Optional[datetime] = None) -> int:
+    now = now or datetime.now(timezone.utc)
+    to_del = [k for k, v in _store.items() if v <= now]
+    for k in to_del:
+        _store.pop(k, None)
+    return len(to_del)
 
 def _reset() -> None:
-    _blacklist.clear()
+    _store.clear()
+
+__all__ = ["blacklist_jti", "is_blacklisted", "purge_expired", "_reset"]

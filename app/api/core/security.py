@@ -1,9 +1,8 @@
-# app/api/core/security.py
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-from typing import Optional
 import uuid
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Any
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -12,9 +11,6 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 
 from app.api.core.config import settings
-
-
-
 
 # ---------------------------------------------------------------------
 # Auth header(Bearer) 파서
@@ -31,6 +27,9 @@ def get_password_hash(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return _pwd_ctx.verify(plain_password, hashed_password)
+
+# (호환용 별칭: 기존 코드에서 hash_password를 쓴 경우 지원)
+hash_password = get_password_hash
 
 # ---------------------------------------------------------------------
 # Email verification token (itsdangerous)
@@ -124,12 +123,12 @@ def clear_auth_cookies(response) -> None:
 # ---------------------------------------------------------------------
 # Current user dependency
 #  - 헤더 Bearer 우선, 없으면 access_token 쿠키 사용
+#  - access 토큰의 jti가 블랙리스트면 거부 (옵션)
 # ---------------------------------------------------------------------
-# app/api/core/security.py  (기존 함수 교체)
 async def get_current_user(
     request: Request,
     creds: HTTPAuthorizationCredentials = Depends(bearer),
-):
+) -> Any:
     token = None
     if creds and creds.scheme.lower() == "bearer":
         token = creds.credentials
@@ -140,36 +139,25 @@ async def get_current_user(
 
     payload = decode_token(token, token_type="access")
 
-    # ⬇ access jti 블랙리스트 체크
+    # access jti 블랙리스트 체크 (로그아웃 시 refresh만 블랙리스트에 올린다면, 여기 체크는 항상 False가 됨)
     jti = payload.get("jti")
-    from app.api.repositories.token_blacklist_repo import is_jti_blacklisted
+    from app.api.repositories.token_blacklist_repo import is_jti_blacklisted  # 지연 임포트
     if not jti or await is_jti_blacklisted(jti):
         raise HTTPException(status_code=401, detail="Token blacklisted")
-    from app.api.repositories.user_repo import get_by_email
+
+    from app.api.repositories.user_repo import get_by_email  # 지연 임포트
     email = payload.get("sub")
     user = await get_by_email(email)
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     return user
 
-
-# app/api/core/security.py
-from passlib.context import CryptContext
-from datetime import datetime, timedelta, timezone
-from jose import jwt
-# 여기서는 user_repo를 임포트하지 않습니다!
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
-
-def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
-
+# ---------------------------------------------------------------------
+# Auth helpers
+# ---------------------------------------------------------------------
 async def authenticate_user(email: str, password: str):
-    # 🔽 순환 임포트 방지: 함수 내부에서 임포트
-    from app.api.repositories.user_repo import get_by_email
+    """이메일/비밀번호로 사용자 인증 (로그인에서 사용)"""
+    from app.api.repositories.user_repo import get_by_email  # 지연 임포트
     user = await get_by_email(email)
     if not user:
         return None
@@ -177,10 +165,7 @@ async def authenticate_user(email: str, password: str):
         return None
     return user
 
-# (토큰 생성/검증 함수 등 다른 부분은 기존 그대로)
-
 async def is_token_revoked(jti: str) -> bool:
-    # 🔽 함수 내부 임포트
-    from app.api.repositories.token_blacklist_repo import is_jti_blacklisted
+    """토큰 jti가 블랙리스트인지 여부"""
+    from app.api.repositories.token_blacklist_repo import is_jti_blacklisted  # 지연 임포트
     return await is_jti_blacklisted(jti)
-

@@ -1,7 +1,7 @@
 # app/api/v1/diary/endpoints.py
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, Literal
 from datetime import date
 from fastapi import (
     APIRouter, Depends, HTTPException, Query, Response, status
@@ -27,22 +27,27 @@ async def ping():
 
 # 작성 (mission_2)
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=DiaryOut)
-async def create_diary_api(payload: DiaryCreate, user=Depends(get_current_user)):
-    diary = await create_diary(user, payload.model_dump())
+async def create_diary_api(payload: DiaryCreate, response: Response, user=Depends(get_current_user)):
+    diary = await create_diary(user, payload.model_dump(exclude_unset=True))
+    # Location 헤더 (권장)
+    response.headers["Location"] = f"/api/v1/diaries/{diary.id}"
     return diary
 
 
 # 조회 + 검색/정렬/페이징 (mission_3, mission_6)
 @router.get("", response_model=list[DiaryOut])
 async def list_diaries_api(
-    page: int = 1,
-    page_size: int = 20,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
     q: Optional[str] = Query(None, description="제목/내용 검색어"),
     date_from: Optional[date] = Query(None, description="시작 날짜"),
     date_to: Optional[date] = Query(None, description="끝 날짜"),
-    order: str = Query("desc", pattern="^(asc|desc)$", description="정렬: asc|desc"),
+    order: Literal["asc", "desc"] = Query("desc", description="정렬: asc|desc"),
     user=Depends(get_current_user),
 ):
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(status_code=400, detail="date_from must be <= date_to")
+
     diaries = await list_diaries(
         user=user,
         page=page,
