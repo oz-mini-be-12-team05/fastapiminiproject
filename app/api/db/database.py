@@ -39,9 +39,7 @@ def _resolve_db_url() -> str:
 
 def build_tortoise_config(db_url: str | None = None) -> dict:
     """
-    Aerich와 동일하게 사용할 수 있는 설정 객체 생성.
-    models 패키지가 __init__.py에서 모든 모델을 re-export 해야 함.
-    (만약 re-export가 없다면 아래 리스트를 각 모델 경로로 바꿔도 됩니다.)
+    Aerich가 그대로 읽을 수 있는 설정 객체 생성.
     """
     db_url = db_url or _resolve_db_url()
     return {
@@ -49,7 +47,14 @@ def build_tortoise_config(db_url: str | None = None) -> dict:
         "apps": {
             "models": {
                 "models": [
-                    "app.api.models",   # ← 패키지 경로 (User, Diary, Tag 등 re-export 필요)
+                    # ← 개별 모델 모듈을 명시하면 re-export 없이도 안전합니다.
+                    "app.api.models.user",
+                    "app.api.models.tag",
+                    "app.api.models.emotion",
+                    "app.api.models.notification",
+                    "app.api.models.revoked_token",
+                    "app.api.models.token_blacklist",
+                    "app.api.models.diary",
                     "aerich.models",
                 ],
                 "default_connection": "default",
@@ -58,15 +63,18 @@ def build_tortoise_config(db_url: str | None = None) -> dict:
     }
 
 
+# ✅ Aerich가 이 변수를 import 해서 씁니다.
+TORTOISE_ORM = build_tortoise_config()
+
+
 async def init_db() -> None:
     """
-    - 운영(예: Postgres)에서는 Aerich 마이그레이션을 사용 → 스키마 자동생성 X
-    - 테스트/로컬(SQLite)에서는 스키마 자동생성으로 간단히 구동
+    - 운영(Postgres)은 Aerich 마이그레이션 사용 → generate_schemas() 호출 X
+    - 테스트/로컬(SQLite)은 자동 스키마 생성 허용
     """
     db_url = _resolve_db_url()
     await Tortoise.init(config=build_tortoise_config(db_url))
 
-    # 테스트 시(DB_URL=sqlite://...) 자동 스키마 생성
     if db_url.startswith("sqlite://"):
         await Tortoise.generate_schemas(safe=True)
 

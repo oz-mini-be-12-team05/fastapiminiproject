@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Optional, Literal, List, Any
 from datetime import date, datetime as _dt
+import datetime as dt
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
 from app.api.core.security import get_current_user
@@ -65,8 +66,8 @@ async def list_diaries_api(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     q: Optional[str] = Query(None, description="제목/내용 검색어"),
-    date_from: Optional[date] = Query(None, description="시작 날짜"),
-    date_to: Optional[date] = Query(None, description="끝 날짜"),
+    date_from: Optional[dt.date] = Query(None, description="시작 날짜"),
+    date_to: Optional[dt.date] = Query(None, description="끝 날짜"),
     order: Literal["asc", "desc"] = Query("desc", description="정렬: asc|desc"),
     tags: Optional[str] = Query(None, description="쉼표구분 태그(ANY)"),
     tags_all: Optional[str] = Query(None, description="쉼표구분 태그(ALL)"),
