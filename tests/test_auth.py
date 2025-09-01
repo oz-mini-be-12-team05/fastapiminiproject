@@ -89,3 +89,14 @@ async def test_login_with_wrong_password(client):
     )
     assert res.status_code == 401
     assert res.json()["detail"] == "Invalid credentials"
+
+
+# 존재하지 않는 이메일 로그인 시도
+@pytest.mark.anyio
+async def test_login_with_nonexistent_email(client):
+    res = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "no_user@example.com", "password": "DoesNotMatter123!"}
+    )
+    assert res.status_code == 401
+    assert res.json()["detail"] == "Invalid credentials"
