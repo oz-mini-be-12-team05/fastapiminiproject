@@ -28,6 +28,7 @@ async def test_get_and_update_me(client):
     assert upd.status_code == 200
     assert upd.json()["name"] == "New Name"
 
+
 @pytest.mark.anyio
 async def test_change_password_and_login_again(client):
     await _register(client, email="pw@example.com", password="OldPass1!", name="Pw")
@@ -47,22 +48,37 @@ async def test_change_password_and_login_again(client):
     assert access2
 
 
-    # 중복 이메일 가입시 에러
-    @pytest.mark.anyio
-    async def test_duplicate_email_registration(client):
-        # 첫 번째 등록 (정상)
-        res1 = await _register(client, email="dup@example.com", password="NewPass123!", name="Dup")
-        assert res1.status_code == 201  # 성공 확인
+# 중복 이메일 가입 시 에러
+@pytest.mark.anyio
+async def test_duplicate_email_registration(client):
+    email = "dup@example.com"
+    password = "NewPass123!"
+    name = "Dup"
 
-        # 두 번째 등록 (중복)
-        res2 = await _register(client, email="dup@example.com", password="NewPass123!", name="Dup")
+    # 첫 번째 등록 (정상)
+    res1 = await _register(client, email=email, password=password, name=name)
+    assert res1.status_code == 201  # 성공 확인
 
-        # 반환값이 Response인 경우
-        if hasattr(res2, "status_code"):
-            assert res2.status_code in (400, 409)
-        # 반환값이 예외를 던지는 구조인 경우
-        else:
-            # HTTPStatusError 예외 처리
-            import pytest
-            with pytest.raises(Exception):
-                await _register(client, email="dup@example.com", password="NewPass123!", name="Dup")
+    # 두 번째 등록 (중복) 처리
+    try:
+        res2 = await _register(client, email=email, password=password, name=name)
+        # Response 반환 시 상태 코드 확인
+        assert res2.status_code == 409
+    except Exception:
+        # 예외를 던지는 구조일 경우 예외 확인
+        import pytest
+        with pytest.raises(Exception):
+            await _register(client, email=email, password=password, name=name)
+
+
+
+# 올바른 회원가입 후 잘못된 비밀번호로 로그인 시도
+@pytest.mark.anyio
+async def test_login_with_wrong_password(client):
+    await _register(
+        client,
+        email="wrongpw@example.com",
+        password="CorrectPass123!",
+        name="WrongPW"
+    )
+
