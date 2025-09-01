@@ -45,3 +45,8 @@ async def test_tag_crud_and_filter(client):
     await client.post("/api/v1/diaries", json={"title": "a", "content": "a", "tags": ["work"]}, headers=headers)
     await client.post("/api/v1/diaries", json={"title": "b", "content": "b", "tags": ["life"]}, headers=headers)
     await client.post("/api/v1/diaries", json={"title": "c", "content": "c", "tags": ["work", "life"]}, headers=headers)
+
+    # 없는 태그 검색 시 빈 배열
+    r = await client.get("/api/v1/diaries?tags=unknown", headers=headers)
+    assert r.status_code == 200
+    assert r.json() == []
