@@ -31,3 +31,8 @@ async def test_tag_crud_and_filter(client):
     # 태그 중복 생성 시 에러
     r = await client.post("/api/v1/tags", json={"name": "work"}, headers=headers)
     assert r.status_code in (400, 409)
+
+    #  태그 목록 조회
+    r = await client.get("/api/v1/tags", headers=headers)
+    tags = {t["name"] for t in r.json()}
+    assert "work" in tags and "life" in tags
