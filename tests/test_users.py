@@ -45,3 +45,24 @@ async def test_change_password_and_login_again(client):
     relogin = _login_bearer
     access2, refresh2, headers2 = await relogin(client, email="pw@example.com", password="NewPass1!")
     assert access2
+
+
+    # 중복 이메일 가입시 에러
+    @pytest.mark.anyio
+    async def test_duplicate_email_registration(client):
+        # 첫 번째 등록 (정상)
+        res1 = await _register(client, email="dup@example.com", password="NewPass123!", name="Dup")
+        assert res1.status_code == 201  # 성공 확인
+
+        # 두 번째 등록 (중복)
+        res2 = await _register(client, email="dup@example.com", password="NewPass123!", name="Dup")
+
+        # 반환값이 Response인 경우
+        if hasattr(res2, "status_code"):
+            assert res2.status_code in (400, 409)
+        # 반환값이 예외를 던지는 구조인 경우
+        else:
+            # HTTPStatusError 예외 처리
+            import pytest
+            with pytest.raises(Exception):
+                await _register(client, email="dup@example.com", password="NewPass123!", name="Dup")
