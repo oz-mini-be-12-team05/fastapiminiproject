@@ -39,13 +39,38 @@ from app.api.core.config import settings
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=MessageResponse)
-async def register(payload: SignupRequest):
+from fastapi import Body, HTTPException, status
+
+@router.post(
+    "/register",
+    status_code=status.HTTP_201_CREATED,
+    response_model=MessageResponse,
+    summary="회원가입",                                  # ← 여기서 제목 노출
+    description="이메일/이름/비밀번호로 신규 사용자를 생성합니다.",  # ← 상세 설명
+)
+async def register(
+    payload: SignupRequest = Body(                     # ← 요청 바디에 문서용 메타데이터
+        ...,
+        title="회원가입 요청 바디",
+        description="회원가입에 필요한 필드들을 JSON으로 보냅니다.",
+        examples={
+            "예시": {
+                "value": {
+                    "email": "test@example.com",
+                    "name": "홍길동",
+                    "password": "pw123456",
+                    "password_confirm": "pw123456"
+                }
+            }
+        },
+    )
+):
     if await get_by_email(payload.email):
         raise HTTPException(status_code=409, detail="Email already registered")
 
     hashed = get_password_hash(payload.password.get_secret_value())
     await create_user(email=payload.email, name=payload.name, hashed_password=hashed)
+
     return MessageResponse(message="registered")
 
 
