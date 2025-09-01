@@ -40,3 +40,8 @@ async def test_tag_crud_and_filter(client):
     # 인증 없는 접근 시 401
     r = await client.get("/api/v1/tags")
     assert r.status_code == 401
+
+    #  일기 작성 시 태그 연결
+    await client.post("/api/v1/diaries", json={"title": "a", "content": "a", "tags": ["work"]}, headers=headers)
+    await client.post("/api/v1/diaries", json={"title": "b", "content": "b", "tags": ["life"]}, headers=headers)
+    await client.post("/api/v1/diaries", json={"title": "c", "content": "c", "tags": ["work", "life"]}, headers=headers)
