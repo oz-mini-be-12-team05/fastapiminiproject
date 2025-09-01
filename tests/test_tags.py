@@ -50,3 +50,4 @@ async def test_tag_crud_and_filter(client):
     r = await client.get("/api/v1/diaries?tags=unknown", headers=headers)
     assert r.status_code == 200
     assert r.json() == []
+
