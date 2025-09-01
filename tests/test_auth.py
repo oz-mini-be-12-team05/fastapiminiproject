@@ -74,3 +74,18 @@ async def test_logout_clears_cookies(client):
     set_cookie = res.headers.get("set-cookie", "")
     assert "access_token=;" in set_cookie or "access_token=" in set_cookie and "Max-Age=0" in set_cookie
     assert "refresh_token=;" in set_cookie or "refresh_token=" in set_cookie and "Max-Age=0" in set_cookie
+
+
+# 회원가입
+@pytest.mark.anyio
+async def test_login_with_wrong_password(client):
+
+    await _register(client, email="wrongpw@example.com", password="CorrectPass123!", name="WrongPW")
+
+    # 잘못된 비밀번호 로그인 시도
+    res = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "wrongpw@example.com", "password": "WrongPass123!"}
+    )
+    assert res.status_code == 401
+    assert res.json()["detail"] == "Invalid credentials"
