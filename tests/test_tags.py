@@ -27,3 +27,26 @@ async def test_tag_crud_and_filter(client):
     # 태그 목록
     r = await client.get("/api/v1/tags", headers=headers)
     assert r.status_code == 200 and {t["name"] for t in r.json()} == {"work", "life"}
+
+    # 태그 중복 생성 시 에러
+    r = await client.post("/api/v1/tags", json={"name": "work"}, headers=headers)
+    assert r.status_code in (400, 409)
+
+    #  태그 목록 조회
+    r = await client.get("/api/v1/tags", headers=headers)
+    tags = {t["name"] for t in r.json()}
+    assert "work" in tags and "life" in tags
+
+    # 인증 없는 접근 시 401
+    r = await client.get("/api/v1/tags")
+    assert r.status_code == 401
+
+    #  일기 작성 시 태그 연결
+    await client.post("/api/v1/diaries", json={"title": "a", "content": "a", "tags": ["work"]}, headers=headers)
+    await client.post("/api/v1/diaries", json={"title": "b", "content": "b", "tags": ["life"]}, headers=headers)
+    await client.post("/api/v1/diaries", json={"title": "c", "content": "c", "tags": ["work", "life"]}, headers=headers)
+
+    # 없는 태그 검색 시 빈 배열
+    r = await client.get("/api/v1/diaries?tags=unknown", headers=headers)
+    assert r.status_code == 200
+    assert r.json() == []
