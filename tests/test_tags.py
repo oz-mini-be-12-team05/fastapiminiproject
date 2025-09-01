@@ -36,3 +36,7 @@ async def test_tag_crud_and_filter(client):
     r = await client.get("/api/v1/tags", headers=headers)
     tags = {t["name"] for t in r.json()}
     assert "work" in tags and "life" in tags
+
+    # 인증 없는 접근 시 401
+    r = await client.get("/api/v1/tags")
+    assert r.status_code == 401
