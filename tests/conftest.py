@@ -1,5 +1,6 @@
 # tests/conftest.py
-import os, sys
+import os
+import sys
 os.environ["USE_FAKE_REPOS"] = "false"          # ← 항상 DB 레포 강제
 os.environ["DB_URL"] = "sqlite://:memory:"      # ← 테스트는 인메모리 SQLite
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

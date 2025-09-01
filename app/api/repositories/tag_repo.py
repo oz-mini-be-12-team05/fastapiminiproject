@@ -2,10 +2,10 @@
 from __future__ import annotations
 from .memory import tag_repo as mem
 # app/api/repositories/tag_repo.py
-from typing import List, Optional
+from typing import List
 from tortoise.exceptions import IntegrityError
 
-from app.api.models import Tag, User, Diary
+from app.api.models import Tag, User
 
 async def list_tags(user: User) -> List[Tag]:
     return await Tag.filter(user=user).order_by("name")

@@ -10,7 +10,7 @@
 #   - 의존성 묶기(배포용):  make deps-bundle     # requirements.txt + wheelhouse.zip 생성
 #   - 패키지 설치(오프라인):
 #       unzip wheelhouse.zip && make offline-install   # uv 사용
-#       또는  make pip-offline-install                 # pip만 있을 때
+#       또는  make pip-offpip install fastapi uvicornline-install                 # pip만 있을 때
 #
 # ▶ Windows 팁
 #   - make 가 없으면 Scoop/Choco로 설치하거나 MSYS2, WSL 사용

@@ -2,9 +2,14 @@ version = "0.1.0"
 readme = "README.md"
 
 [tool.aerich]
-tortoise_orm = "app.api.db.database.TORTOISE_ORM"
-location = "./migrations"
-src_folder = "./."
+tortoise_orm = "app.api.db.database.TORTOISE_CONFIG"
+location = "app/api/migrations"
+models = ["app.api.models", "aerich.models"]
+
+[tool.uv.workspace]
+members = [
+    "fastapiminiproject",
+]
 
 [project]
 name = "fastapiminiproject"
@@ -19,6 +24,7 @@ dependencies = [
     "pydantic-settings>=2.10.1",
     "python-dotenv>=1.1.1",
     "python-jose[cryptography]>=3.5.0",
+    "tomlkit>=0.13.3",
     "uvicorn>=0.35.0",
 ]
 
@@ -26,7 +32,21 @@ dependencies = [
 dev = [
     "aerich==0.7.1",
     "asgi-lifespan>=2.1.0",
+    "asyncpg>=0.30.0",
+    "fastapi>=0.116.1",
     "httpx>=0.28.1",
     "pytest>=8.4.1",
     "pytest-asyncio>=1.1.0",
+    "python-dotenv>=1.1.1",
+    "ruff>=0.12.11",
+    "tortoise-orm>=0.25.1",
+    "uvicorn>=0.35.0",
+]
+prod = [
+    "aerich>=0.7.1",
+    "asyncpg>=0.30.0",
+    "fastapi>=0.116.1",
+    "python-dotenv>=1.1.1",
+    "tortoise-orm>=0.25.1",
+    "uvicorn>=0.35.0",
 ]
