@@ -58,9 +58,14 @@ class DiaryUpdate(BaseModel):
             return None
         return DiaryBase._normalize_tags(v)
 
+# app/api/schemas/diary.py
 class DiaryOut(DiaryBase):
     id: int
-    created_at: dt.datetime | None = None
-    updated_at: dt.datetime | None = None
+    ai_summary: Optional[str] = None          # ← 요약 결과
+    main_emotion: Optional[str] = None        # (선택) 감정 결과
+    emotion_keywords: List[str] = []          # (선택) 키워드들
+    created_at: Optional[dt.datetime] = None
+    updated_at: Optional[dt.datetime] = None
+
 
     model_config = ConfigDict(from_attributes=True)
