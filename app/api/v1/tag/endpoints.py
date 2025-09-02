@@ -1,7 +1,9 @@
 from __future__ import annotations
+
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Response
+from pydantic import BaseModel, Field, ConfigDict
+
 
 from app.api.core.security import get_current_user
 from app.api.repositories.tag_repo import (
@@ -23,6 +25,7 @@ async def ping():
 
 
 @router.get("", response_model=list[TagOut])
+
 async def list_tags(
     name: Optional[str] = Query(None, description="태그명(정확히 일치)으로 필터"),
     user=Depends(get_current_user),
@@ -54,10 +57,27 @@ async def get_tag(tag_id: int, user=Depends(get_current_user)):
     return TagOut(id=t.id, name=t.name)
 
 
+
 @router.delete("/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_tag(tag_id: int, user=Depends(get_current_user)):
+
     """태그 삭제(다이어리 생성 시 만들어진 태그를 관리용으로 삭제)"""
+
+    # 1️⃣ 태그에 연결된 일기 확인
+    diaries_with_tag = await db.fetch_all(
+        "SELECT * FROM diaries WHERE tags @> :tag",
+        values={"tag": [tag_id]}
+    )
+    if diaries_with_tag:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete tag because it is associated with diaries"
+        )
+
+    # 2️⃣ 실제 삭제
     ok = await repo_delete(user, tag_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Tag not found")
-    return None
+
+    # 3️⃣ 204 No Content 반환
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
